@@ -21,12 +21,13 @@ nPoint_DBD += base.dbd
 # Include dbd files from all support applications:
 #ifdef ASYN
 nPoint_DBD += asyn.dbd
+nPoint_DBD += drvAsynSerialPort.dbd
 #endif
 nPoint_DBD += motorSupport.dbd
-nPoint_DBD += devNPoint.dbd
+nPoint_DBD += NPointMotorSupport.dbd
 
 # Add all the support libraries needed by this IOC
-nPoint_LIBS += nPoint
+nPoint_LIBS += NPointMotor
 nPoint_LIBS += motor
 #ifdef ASYN
 nPoint_LIBS += asyn
