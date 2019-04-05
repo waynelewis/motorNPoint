@@ -5,6 +5,9 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+# The following are used for debugging messages.
+#!USR_CXXFLAGS += -DDEBUG
+
 #=============================
 # Build the IOC application
 
@@ -16,10 +19,21 @@ DBD += nPoint.dbd
 nPoint_DBD += base.dbd
 
 # Include dbd files from all support applications:
-#nPoint_DBD += xxx.dbd
+#ifdef ASYN
+nPoint_DBD += asyn.dbd
+#endif
+nPoint_DBD += motorSupport.dbd
+nPoint_DBD += devNPoint.dbd
 
 # Add all the support libraries needed by this IOC
-#nPoint_LIBS += xxx
+nPoint_LIBS += nPoint
+nPoint_LIBS += motor
+#ifdef ASYN
+nPoint_LIBS += asyn
+#endif
+#ifdef SNCSEQ
+nPoint_LIBS += seq pv
+#endif
 
 # nPoint_registerRecordDeviceDriver.cpp derives from nPoint.dbd
 nPoint_SRCS += nPoint_registerRecordDeviceDriver.cpp
