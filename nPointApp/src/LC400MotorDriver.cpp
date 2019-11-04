@@ -706,6 +706,7 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
     ss.str("");
     ss<<"npoint-axis"<<axisNo_<<".log";
     FILE *log = fopen(ss.str().c_str(),"wb");
+    /*
     if ((status = pC_->writeSingle(chAddr+WAV_ACTIVE,0)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ACTIVE,0);
 
@@ -726,6 +727,31 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
 
     if ((status = pC_->writeSingle(chAddr+WAV_COUNT,1)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_COUNT,1);
+    */
+
+    if ((status = pC_->writeSingle(chAddr+WAV_ENABLE,0)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ENABLE,0);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_ACTIVE,0)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ACTIVE,0);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_ITERATIONS,1)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ITERATIONS,1);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_COUNT,1)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_COUNT,1);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_DELAY,(epicsInt32)movement->cycle_count)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_DELAY,(epicsInt32)movement->cycle_count);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_END,((epicsInt32)movement->data_len-1))) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_END,((epicsInt32)movement->data_len-1));
+
+    if ((status = pC_->writeSingle(chAddr+WAV_INDEX,1)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_INDEX,1);
+
+    if ((status = pC_->writeSingle(chAddr+WAV_ENABLE,2)) ) goto skip;
+    fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ENABLE,2);
 
     //readback wavetable parameters and update PVs
     epicsInt32 val;
