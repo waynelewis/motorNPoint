@@ -658,6 +658,14 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
   waveform_t *movement = (waveform_t*)malloc(sizeof(*movement));
   genTrapezoid(initialPos,position,maxVelocity,acceleration,movement,(size_t)maxpts);
   
+  // make sure wave table is not active
+  printf("deactivating wave table\n");
+  chAddr = getBaseAddress(axisNo_);
+  status = pC_->writeSingle(chAddr+WAV_ACTIVE,0);
+  epicsThreadSleep(0.10);
+  status = pC_->writeSingle(chAddr+WAV_ACTIVE,0);
+  epicsThreadSleep(0.10);
+
   //write array to controller
   epicsUInt32 wavAddr = getWavetableAddress(axisNo_);
   if (wavAddr)
@@ -681,20 +689,21 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
     return asynError;
   }
   //necessary to make sure the controller has time to write array
-  epicsThreadSleep(0.01);
+  epicsThreadSleep(0.10);
 
   //readback array from controller 
-  waveform_t *readArrray = (waveform_t*)malloc(sizeof(*readArrray));
-  if ((status = pC_->readArray(wavAddr,(size_t)movement->data_len,readArrray->dataProc,movement->data_len*sizeof(epicsInt32))) )
+  waveform_t *readArray = (waveform_t*)malloc(sizeof(*readArray));
+  if ((status = pC_->readArray(wavAddr,(size_t)movement->data_len,readArray->dataProc,movement->data_len*sizeof(epicsInt32))) )
     goto skip;
   //check if array from controller is the same as the generated array
+  printf("checking array consistency\n");
   for (epicsUInt32 i=0; i<movement->data_len; i++)
   {
-    if(movement->dataProc[i] != readArrray->dataProc[i])
+    if(movement->dataProc[i] != readArray->dataProc[i])
     {
       status = asynError;
       printf("something is wrong with array pos[%d] wrote %d read %d\n", 
-        i, movement->dataProc[i],readArrray->dataProc[i]);
+        i, movement->dataProc[i],readArray->dataProc[i]);
       goto skip;
     }
   }
@@ -706,26 +715,34 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
     ss.str("");
     ss<<"npoint-axis"<<axisNo_<<".log";
     FILE *log = fopen(ss.str().c_str(),"wb");
+  epicsThreadSleep(0.10);
     if ((status = pC_->writeSingle(chAddr+WAV_ACTIVE,0)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ACTIVE,0);
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_INDEX,1)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_INDEX,1);
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_ENABLE,2)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ENABLE,2);
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_DELAY,(epicsInt32)movement->cycle_count)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_DELAY,(epicsInt32)movement->cycle_count);
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_END,((epicsInt32)movement->data_len-1))) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_END,((epicsInt32)movement->data_len-1));
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_ITERATIONS,1)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ITERATIONS,1);
+  epicsThreadSleep(0.10);
 
     if ((status = pC_->writeSingle(chAddr+WAV_COUNT,1)) ) goto skip;
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_COUNT,1);
+  epicsThreadSleep(0.10);
 
     //readback wavetable parameters and update PVs
     epicsInt32 val;
@@ -747,6 +764,7 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
     
     //start movement
     status = pC_->writeSingle(chAddr+WAV_ACTIVE,1);
+  epicsThreadSleep(0.10);
     fprintf(log,"write, addr: %8X, val: %8X\n",chAddr+WAV_ACTIVE,1);
     fclose(log);
 
@@ -771,7 +789,9 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
     }
     */
     //sleep for 10% of the movement time
+    printf("sleeping\n");
     epicsThreadSleep(tMovement * 0.1);
+    printf("waking\n");
     status = pC_->writeSingle(wavAddr,position);
 
   }
@@ -780,7 +800,7 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
 
   skip:
   free(movement);
-  free(readArrray);
+  free(readArray);
   return status;
 }
 
