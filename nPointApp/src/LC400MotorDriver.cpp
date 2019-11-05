@@ -658,6 +658,15 @@ asynStatus LC400Axis::move(epicsFloat64 position, epicsInt32 relative, epicsFloa
   waveform_t *movement = (waveform_t*)malloc(sizeof(*movement));
   genTrapezoid(initialPos,position,maxVelocity,acceleration,movement,(size_t)maxpts);
   
+  // force trajectory stop
+  printf("forcing trajectory stop\n");
+  status = pC_->writeSingle(0x1182904C,1);
+
+  // disable trajectory generation
+  printf("disable trajectory generation\n");
+  chAddr = getBaseAddress(axisNo_);
+  status = pC_->writeSingle(chAddr + 0xB10,0);
+
   //write array to controller
   epicsUInt32 wavAddr = getWavetableAddress(axisNo_);
   if (wavAddr)
